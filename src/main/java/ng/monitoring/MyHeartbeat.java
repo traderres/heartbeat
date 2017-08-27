@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 public class MyHeartbeat
@@ -71,7 +73,7 @@ public class MyHeartbeat
             else
             {
                 // No change since the last time
-                logger.debug("Website status is unchanged.");
+                logger.debug("Website status is unchanged.  currentSiteStatus.isSiteUp={}", currentSiteStatus.isSiteUp());
             }
         }
         catch(Exception e)
@@ -120,6 +122,16 @@ public class MyHeartbeat
     }
 
 
+    /*********************************************************
+     * getCurrentDateTime()
+     *********************************************************/
+    public static String getCurrentDateTime()
+     {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        Date now = new Date();
+        String sDateTime = simpleDateFormat.format(now);
+        return sDateTime;
+    }
 
 
     /*********************************************************
@@ -135,7 +147,8 @@ public class MyHeartbeat
         long lStartTime = System.currentTimeMillis();
 
         Status currentStatus = new Status();
-
+        currentStatus.setSiteIsUp(false);
+        currentStatus.setEntryDate( getCurrentDateTime() );
 
         try(WebClient webClient = new WebClient(BrowserVersion.FIREFOX_45) )
         {
@@ -202,9 +215,8 @@ public class MyHeartbeat
                 throw new RuntimeException("Something went wrong logging out");
             }
 
-
-            logger.debug("redirectPage={}", redirectPage.toString());
-
+            // If I got this far, then the website is up
+            currentStatus.setSiteIsUp(true);
         }
         catch (Exception e)
         {

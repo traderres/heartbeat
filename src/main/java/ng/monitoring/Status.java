@@ -5,10 +5,18 @@ package ng.monitoring;
  */
 public class Status
 {
-    private boolean isSiteUp = false;
+    private boolean siteIsUp;
     private String errorMessage;
     private String errorStep;
+    private String entryDate;
 
+    public String getEntryDate() {
+        return entryDate;
+    }
+
+    public void setEntryDate(String entryDate) {
+        this.entryDate = entryDate;
+    }
 
     public String getErrorMessage() {
         return errorMessage;
@@ -19,11 +27,11 @@ public class Status
     }
 
     public boolean isSiteUp() {
-        return isSiteUp;
+        return siteIsUp;
     }
 
-    public void setSiteUp(boolean siteUp) {
-        isSiteUp = siteUp;
+    public void setSiteIsUp(boolean aSiteIsUp) {
+        siteIsUp = aSiteIsUp;
     }
 
 
@@ -34,5 +42,4 @@ public class Status
     public void setErrorStep(String errorStep) {
         this.errorStep = errorStep;
     }
-
 }

@@ -17,62 +17,14 @@ public class StatusFileUtils
 
 
 
-
-    /********************************************************************
-     * getLastStatusFromStatsFile()
-     ********************************************************************/
-    public Status getLastStatusFromStatsFile()
-    {
-        logger.debug("getLastStatusFromStatsFile() started.");
-
-        Status lastStatus = null;
-
-
-
-        // Use the try-with-resources to open a BufferedReader object
-        // NOTE:  When the JVM gets out of this try block, the OutputStreamWriter object will be closed
-        try ( BufferedReader br = new BufferedReader(new FileReader(this.statsFilePath)) )
-        {
-            String sLine = null;
-            while ((sLine = br.readLine()) != null)
-            {
-
-            }
-
-            lastStatus = new Status();
-
-            // Get the status info from the line
-            logger.debug("last line is this: {}", sLine);
-        }
-        catch (Exception e)
-        {
-            logger.debug("Critical Error in getLastStatusFromStatsFile()", e);
-            RuntimeException re = new RuntimeException(e);
-            re.setStackTrace(e.getStackTrace() );
-            throw re;
-        }
-
-
-        logger.debug("getLastStatusFromStatsFile() finished.");
-        return lastStatus;
-    }
-
-
-    /********************************************************************
-     * getStatusSummaryFromFile()
-     ********************************************************************/
-    public String getStatusSummaryFromFile()
-    {
-        String sSummary = "blah";
-
-        return sSummary;
-    }
-
    /********************************************************************
-     * appendStatusToFile()
-     ********************************************************************/
+    * StatusFileUtils()  Constructor
+    *
+    *  1) If the stats file exists, then verify it is writable
+    *  2) If the stats file does not exist, then create an empty one
+    ********************************************************************/
     public StatusFileUtils(String aStatsFilePath) throws Exception
-    {
+     {
         if ((aStatsFilePath == null) || (aStatsFilePath.length() == 0))
         {
             throw new RuntimeException("Error in StatusFileUtils():  The passed-in file path is null or empty.");
@@ -103,18 +55,24 @@ public class StatusFileUtils
 
     /********************************************************************
      * appendStatusToFile()
+     *
+     * Append the status information to the Stats File
      ********************************************************************/
     public void appendStatusToFile(Status aStatus)
     {
         logger.debug("appendStatusToFile() started.");
 
+        // Convert Status Object into a line of text (to append to the stats file)
+        String sSummary = getLineOfTextFromStatus(aStatus);
 
-        String sSummary = "this is the summary";
+        boolean bAppendMode = true;
 
+        // Open the file in appendMode
         // Use the try-with-resources to open an OutputStreamWriter
         // NOTE:  When the JVM gets out of this try block, the OutputStreamWriter object will be closed
-        try ( Writer fileWriter = new OutputStreamWriter(new FileOutputStream(this.statsFilePath), StandardCharsets.UTF_8) )
+        try ( Writer fileWriter = new OutputStreamWriter(new FileOutputStream(this.statsFilePath, bAppendMode), StandardCharsets.UTF_8) )
         {
+            // Append this line to the file
             fileWriter.write(sSummary + "\n");
         }
         catch(Exception e)
@@ -126,6 +84,94 @@ public class StatusFileUtils
         }
 
         logger.debug("appendStatusToFile() finished");
+    }
+
+
+
+    /********************************************************************
+     * getLastStatusFromStatsFile()
+     ********************************************************************/
+    public Status getLastStatusFromStatsFile()
+    {
+        logger.debug("getLastStatusFromStatsFile() started.");
+
+        Status lastStatus = null;
+
+
+        // Use the try-with-resources to open a BufferedReader object
+        // NOTE:  When the JVM gets out of this try block, the OutputStreamWriter object will be closed
+        try ( BufferedReader br = new BufferedReader(new FileReader(this.statsFilePath)) )
+        {
+            String sLine = null;
+            while ((sLine = br.readLine()) != null)
+            {
+                // Read every line in the file
+            }
+
+            // If the file is empty, then the last line might be null.  That's OK
+
+            // Get the status object info from this line of text
+            lastStatus = getStatusObjectFromLineOfText(sLine);
+
+            // Get the status info from the line
+            logger.debug("last line is this: {}", sLine);
+        }
+        catch (Exception e)
+        {
+            logger.debug("Critical Error in getLastStatusFromStatsFile()", e);
+            RuntimeException re = new RuntimeException(e);
+            re.setStackTrace(e.getStackTrace() );
+            throw re;
+        }
+
+        logger.debug("getLastStatusFromStatsFile() finished.");
+        return lastStatus;
+    }
+
+
+    /********************************************************************
+     * getStatusObjectFromLineOfText()
+     ********************************************************************/
+    private Status getStatusObjectFromLineOfText(String aLine)
+    {
+        Status oStatus = new Status();
+
+        if ((aLine == null) || (aLine.length() == 0))
+        {
+            // The line was empty so return an *empty* status object
+            return oStatus;
+        }
+
+
+        // Split-up the line into its elements
+        String[] statsArray = aLine.split(",");
+
+        String  sEntryDate = statsArray[0];
+        Boolean bSiteIsUp = new Boolean(statsArray[1]);
+        String  sErrorMessage = statsArray[2];
+        String  sErrorStep = statsArray[3];
+
+        oStatus.setEntryDate(sEntryDate);
+        oStatus.setSiteIsUp(bSiteIsUp);
+        oStatus.setErrorMessage(sErrorMessage);
+        oStatus.setErrorStep(sErrorStep);
+
+        return oStatus;
+    }
+
+
+
+    /********************************************************************
+     * getLineOfTextFromStatus()
+     ********************************************************************/
+    private String getLineOfTextFromStatus(Status aStatus)
+    {
+        String sStatsLine = aStatus.getEntryDate() + "," +
+                            aStatus.isSiteUp() + "," +
+                            aStatus.getErrorMessage() + "," +
+                            aStatus.getErrorStep();
+
+        return sStatsLine;
     }
 
 }
