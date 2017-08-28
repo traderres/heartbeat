@@ -29,7 +29,8 @@ public class MyHeartbeat
      *********************************************************/
     public static void main( String[] args )
     {
-        try
+
+       try
         {
             logger.debug("main() started.");
 
@@ -39,14 +40,21 @@ public class MyHeartbeat
             // Get the stats file path from the command line
             String sStatsFilePath = cmd.getOptionValue("statsfile");
 
+            // Instantiate the StatusFileUtils class (needs the file path)
+            StatusFileUtils statusFileUtils = new StatusFileUtils(sStatsFilePath);
+
             if (cmd.hasOption("generatestats"))
             {
                 // Generate Stats
                 logger.debug("Generating Stats");
+
+                // Generate stats from the stats file
+                String sStatsSummary = statusFileUtils.getSummary();
+
+                // TODO: Email the stats out
             }
 
 
-            StatusFileUtils statusFileUtils = new StatusFileUtils(sStatsFilePath);
 
             // Get the last status info (from the stats file)
             Status lastStatusFromFile = statusFileUtils.getLastStatusFromStatsFile();
@@ -57,18 +65,27 @@ public class MyHeartbeat
             // Append the current status to the stats file
             statusFileUtils.appendStatusToFile(currentSiteStatus);
 
-
-            if ((lastStatusFromFile.isSiteUp() ) && (! currentSiteStatus.isSiteUp()  ))
+            if (lastStatusFromFile == null)
+            {
+                // There was no last status found in the stats file
+                // -- So, do nothing as we do not know what the previous status was
+                logger.warn("No previous status was found in the stats file.  No emails will be sent out this time.");
+            }
+            else if ((lastStatusFromFile.isSiteUp() ) && (! currentSiteStatus.isSiteUp()  ))
             {
                 // The website was last reported up and is now Down
                 // -- Send the website-is-down notification
                 logger.debug("Website is now down.");
+
+                // TODO: Email a message saying the website is now down
             }
             else if ((! lastStatusFromFile.isSiteUp() ) && (currentSiteStatus.isSiteUp()  ))
             {
                 // The website was last reported down and is now Up
                 // -- Send the website-is-up notification
                 logger.debug("Website is now up.");
+
+                // TODO: Email a message saying the website is now up
             }
             else
             {
@@ -122,17 +139,6 @@ public class MyHeartbeat
     }
 
 
-    /*********************************************************
-     * getCurrentDateTime()
-     *********************************************************/
-    public static String getCurrentDateTime()
-     {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-        Date now = new Date();
-        String sDateTime = simpleDateFormat.format(now);
-        return sDateTime;
-    }
-
 
     /*********************************************************
      * getCurrentWebsiteStatus()
@@ -148,7 +154,7 @@ public class MyHeartbeat
 
         Status currentStatus = new Status();
         currentStatus.setSiteIsUp(false);
-        currentStatus.setEntryDate( getCurrentDateTime() );
+        currentStatus.setEntryDate( DateUtils.getCurrentDateTimeAsEpoch() );
 
         try(WebClient webClient = new WebClient(BrowserVersion.FIREFOX_45) )
         {

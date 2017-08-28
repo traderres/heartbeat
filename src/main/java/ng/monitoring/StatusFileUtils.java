@@ -43,7 +43,7 @@ public class StatusFileUtils
         else
         {
             // The stats file does not exist -- so create an empty one
-            logger.debug("The stats file is empty:  So, creating it.");
+            logger.debug("The stats file is empty:  So, creating it:  {}", aStatsFilePath);
             fStatsFile.getParentFile().mkdirs();
             fStatsFile.createNewFile();
         }
@@ -103,18 +103,20 @@ public class StatusFileUtils
         try ( BufferedReader br = new BufferedReader(new FileReader(this.statsFilePath)) )
         {
             String sLine = null;
+            String sLastLine = null;
             while ((sLine = br.readLine()) != null)
             {
                 // Read every line in the file
+                sLastLine = sLine;
             }
 
             // If the file is empty, then the last line might be null.  That's OK
 
             // Get the status object info from this line of text
-            lastStatus = getStatusObjectFromLineOfText(sLine);
+            lastStatus = getStatusObjectFromLineOfText(sLastLine);
 
             // Get the status info from the line
-            logger.debug("last line is this: {}", sLine);
+            logger.debug("last line is this: {}", sLastLine);
         }
         catch (Exception e)
         {
@@ -130,18 +132,77 @@ public class StatusFileUtils
 
 
     /********************************************************************
+     * getSummary()
+     *   1) Get the total amount of down-time over the last week (168 hours)
+     *   2) Get the total amount of down-time since day 1
+     *   3) Return a string that shows
+     *
+     *         Since last Sunday
+     *         ------------------
+     *            Date Range:            08/27/2017 - 09/02/2017   [last Sunday before last Saturday - last Saturday]
+     *            Total Down Time:       1 hr, 34 min, 32 secs
+     *            Total Time:            7 days
+     *            Uptime as a percent:   98.55%                    (total down time / total time)  * 100
+     *
+     *
+     *         Since Day 1
+     *         -----------
+     *            Date Range:            08/27/2017 -            [1st date in stats - last date in stats file]
+     *            Total Down Time:       1 hr, 34 min, 32 secs
+     *            Total Time:            254 days, 167 hr, 26 min
+     *            Uptime as a percent:   98.55%                  (total down time / total time)  * 100
+     ********************************************************************/
+    public String getSummary()
+    {
+        logger.debug("getSummary() started.");
+
+        long lWeekStartDate = DateUtils.getSundayMidnightBeforeLastSaturdayAsEpoch();
+        long lWeekEndDate = DateUtils.getLastSaturdayMignightAsEpoch();
+
+
+        StringBuilder sbSummary = new StringBuilder();
+
+        // Use the try-with-resources to read from the file (using a BufferedReader object)
+        // NOTE:  When the JVM gets out of this try block, the OutputStreamWriter object will be closed
+        try ( BufferedReader br = new BufferedReader(new FileReader(this.statsFilePath)) )
+        {
+            String sLine = null;
+            while ((sLine = br.readLine()) != null)
+            {
+
+            }
+
+
+            // Get the status info from the line
+            logger.debug("last line is this: {}", sLine);
+        }
+        catch (Exception e)
+        {
+            logger.debug("Critical Error in getLastStatusFromStatsFile()", e);
+            RuntimeException re = new RuntimeException(e);
+            re.setStackTrace(e.getStackTrace() );
+            throw re;
+        }
+
+        logger.debug("getSummary() finished.");
+        return sbSummary.toString();
+    }
+
+    /********************************************************************
      * getStatusObjectFromLineOfText()
+     *
+     * Returns a Null object if no status info was found in the file (the file was empty)
      ********************************************************************/
     private Status getStatusObjectFromLineOfText(String aLine)
     {
-        Status oStatus = new Status();
 
         if ((aLine == null) || (aLine.length() == 0))
         {
             // The line was empty so return an *empty* status object
-            return oStatus;
+            return null;
         }
 
+         Status oStatus = new Status();
 
         // Split-up the line into its elements
         String[] statsArray = aLine.split(",");
