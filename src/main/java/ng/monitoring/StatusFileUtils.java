@@ -143,21 +143,105 @@ public class StatusFileUtils
      *
      *         Stats Since Day 1
      *         -----------
-     *            Date Range:            08/27/2017 -            [1st date in stats - last date in stats file]
+     *            Date Range:            08/27/2016 - 09/27/2017         [1st date in stats - last date in stats file]
      *            Total Down Time:       1 hr, 34 min, 32 secs
-     *            Total Time:            254 days, 167 hr, 26 min
+     *            Total Up Time:         253 days, 15 hr
+     *            Total Time:            254 days, 16 hr, 26 min
      *            Uptime as a percent:   98.55%                  (total down time / total time)  * 100
      ********************************************************************/
     public String getSummarySinceDay1()
     {
         logger.debug("getSummarySinceDay1() started.");
 
-        StringBuilder sbSummary = new StringBuilder();
+        String sSummary;
+
+        long lFirstEntryDateAsEpoch = 0;
+        long lLastEntryDateAsEpoch = 0;
+
+        long lTotalUpTime = 0;
+        long lTotalDownTime = 0;
+        long lTotalTime;
+
+        long lDateStartingUpTime = 0;
+
+        // Use the try-with-resources to read from the file (using a BufferedReader object)
+        // NOTE:  When the JVM gets out of this try block, the OutputStreamWriter object will be closed
+        try ( BufferedReader br = new BufferedReader(new FileReader(this.statsFilePath)) )
+        {
+            // Read one line from the file
+            String sLine = br.readLine();
+            BriefStatus statsLine = getBriefStatusFromLine(sLine);
+
+            // The startDate is the epoch date pulled from the first line
+            lFirstEntryDateAsEpoch = statsLine.getlDateAsEpoch();
 
 
+            // Now, we have reached the desired range
+            BriefStatus lastStatsLine = statsLine;
 
-        logger.debug("getSummarySinceDay1() finished.");
-        return sbSummary.toString();
+            if (lastStatsLine.isbSiteUp())
+            {
+                 lDateStartingUpTime = lastStatsLine.getlDateAsEpoch();
+            }
+
+            // Keep reading until we reach EOF or the end of the range
+            while ((sLine = br.readLine()) != null)
+            {
+                statsLine = getBriefStatusFromLine(sLine);
+
+                logger.debug("Processing statsLine={}   lastStatsLine={}", statsLine.toString(), lastStatsLine.toString());
+
+                if ((lastStatsLine.isbSiteUp()) && (! statsLine.isbSiteUp() ))
+                {
+                    // last stats was up and current stats is down
+                    lTotalUpTime = lTotalUpTime + lastStatsLine.getlDateAsEpoch() - lDateStartingUpTime + 1;
+                }
+                else if ((! lastStatsLine.isbSiteUp()) && (statsLine.isbSiteUp()))
+                {
+                    // last stats was down and current stats is up -- so reset the count
+                    lDateStartingUpTime = statsLine.getlDateAsEpoch();
+                }
+
+                lLastEntryDateAsEpoch = statsLine.getlDateAsEpoch();
+                lastStatsLine = statsLine;
+            }
+
+
+            // We have reached the end of the range
+            // -- Add up any numbers
+            if (lastStatsLine.isbSiteUp())    //  && (! statsLine.isbSiteUp() ))
+            {
+                // last stats was up and current stats is down
+                lTotalUpTime = lTotalUpTime + lastStatsLine.getlDateAsEpoch() - lDateStartingUpTime + 1;
+            }
+
+
+            lTotalTime = lLastEntryDateAsEpoch - lFirstEntryDateAsEpoch + 1;
+            lTotalDownTime = lTotalTime - lTotalUpTime;
+            float percentUpTime =  ((float) lTotalUpTime / lTotalTime) * 100;
+
+            sSummary = String.format("Date Range:         %s - %s\n" +
+                                     "Total Down Time:    %s\n" +
+                                     "Total Up Time:      %s\n" +
+                                     "Total Time:         %s\n" +
+                                     "Percent Uptime:     %.2f%%\n",
+                                     DateUtils.getDateOfEpochTime(lFirstEntryDateAsEpoch),
+                                     DateUtils.getDateOfEpochTime(lLastEntryDateAsEpoch),
+                                     DateUtils.getHumanReadableTimeFromSecs(lTotalDownTime),
+                                     DateUtils.getHumanReadableTimeFromSecs(lTotalUpTime),
+                                     DateUtils.getHumanReadableTimeFromSecs(lTotalTime),
+                                     percentUpTime);
+        }
+        catch (Exception e)
+        {
+            logger.debug("Critical Error in getLastStatusFromStatsFile()", e);
+            RuntimeException re = new RuntimeException(e);
+            re.setStackTrace(e.getStackTrace() );
+            throw re;
+        }
+
+        logger.debug("getSummarySinceDay1() finished.\n{}", sSummary);
+        return sSummary;
     }
 
 
@@ -180,10 +264,10 @@ public class StatusFileUtils
         logger.debug("getSummarySinceLastSunday() started.");
 
         // Get the epoch values for last Sunday and last Saturday
-        long lStartDateEpoch = DateUtils.getSundayMidnightBeforeLastSaturdayAsEpoch();
-        long lEndDateEpoch= DateUtils.getLastSaturdayMignightAsEpoch();
+        long lDateRangeStartAsEpoch = DateUtils.getSundayMidnightBeforeLastSaturdayAsEpoch();
+        long lDateRangeEndAsEpoch = DateUtils.getLastSaturdayMignightAsEpoch();
 
-        String sSummary = null;
+        String sSummary;
 
         long lFirstEntryDateAsEpoch = 0;
         long lLastEntryDateAsEpoch = 0;
@@ -207,13 +291,13 @@ public class StatusFileUtils
             {
                 statsLine = getBriefStatusFromLine(sLine);
 
-                if (statsLine.getlDateAsEpoch() > lEndDateEpoch)
+                if (statsLine.getlDateAsEpoch() > lDateRangeEndAsEpoch)
                 {
                     // Break out of the while loop -- we are passed the date range
                     logger.warn("There are is nothing in the range");
                     return "No information is available";
                 }
-                else if (statsLine.getlDateAsEpoch() >= lStartDateEpoch)
+                else if (statsLine.getlDateAsEpoch() >= lDateRangeStartAsEpoch)
                 {
                     // We reached the starting point -- break out of this while loop
                     logger.debug("Reached the starting point.");
@@ -236,7 +320,7 @@ public class StatusFileUtils
                 statsLine = getBriefStatusFromLine(sLine);
 
                 logger.debug("Processing statsLine={}   lastStatsLine={}", statsLine.toString(), lastStatsLine.toString());
-                if (statsLine.getlDateAsEpoch() > lEndDateEpoch)
+                if (statsLine.getlDateAsEpoch() > lDateRangeEndAsEpoch)
                 {
                     // We have reached the end of the range
                     // -- Add up any numbers
@@ -276,8 +360,8 @@ public class StatusFileUtils
                                      "Total Up Time:      %s\n" +
                                      "Total Time:         %s\n" +
                                      "Percent Uptime:     %.2f%%\n",
-                                     DateUtils.getDateOfEpochTime(lStartDateEpoch),
-                                     DateUtils.getDateOfEpochTime(lEndDateEpoch),
+                                     DateUtils.getDateOfEpochTime(lDateRangeStartAsEpoch),
+                                     DateUtils.getDateOfEpochTime(lDateRangeEndAsEpoch),
                                      DateUtils.getHumanReadableTimeFromSecs(lTotalDownTime),
                                      DateUtils.getHumanReadableTimeFromSecs(lTotalUpTime),
                                      DateUtils.getHumanReadableTimeFromSecs(lTotalTime),
