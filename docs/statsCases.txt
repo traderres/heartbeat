@@ -1,0 +1,63 @@
+Case #1:  Down all of the time
+------------------------------
+1,false,
+2,false,
+3,false,
+4,false,
+5,false,
+
+
+
+Case #2:  Up all of the time  (between 2-4, uptime is 3 secs)
+------------------------------
+1,true,
+2,true,
+3,true,
+4,true,
+5,true,
+
+
+Case #3:  Starts Up and goes down  (between 2-4, uptime is 1 sec)
+------------------------------
+1,false,
+2,true,
+3,false,
+4,false,
+5,false,
+
+
+
+Case #4:  Starts down and goes up  (beteween 2-4, uptime is 2 secs)
+-------------------------------------------------------------------
+1,false,
+2,false,
+3,true,
+4,true,
+5,false,
+
+
+1,false,
+2,false,
+3,true,
+302,true,
+1000,false,
+
+
+Algorithm
+---------
+1. Keep looping through file until we get to the start of range
+2. Start of range is the starting last item
+2. Keep looping through the file until we exceed range or reach EOF
+    if last stats was up and this is down
+       iTotalUpTime = iTotalUpTime + (current stats time - startingUpTime
+
+   if  last stats was down and this is up
+       iStartingUpTime = current stats time
+
+
+
+1 day  24 hours  60 min  60 secs
+----- --------- ------- --------
+       1 day    1 hour   1 min
+
+       1 hour

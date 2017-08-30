@@ -98,7 +98,7 @@ public class DateUtils
 
 
 
-     /*********************************************************
+    /*********************************************************
      * getSundayMidnightBeforeLastSaturdayAsEpoch()
      *********************************************************/
     public static long getSundayMidnightBeforeLastSaturdayAsEpoch()
@@ -120,4 +120,67 @@ public class DateUtils
         long lLastSundayMidnightAsEpoch = c.getTimeInMillis() / 1000;
         return lLastSundayMidnightAsEpoch;
     }
+
+    /*********************************************************
+     * getDateOfEpochTime()
+     *********************************************************/
+    public static String getDateOfEpochTime(long aEpochTime)
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy");
+        Date passedInDate = new Date( aEpochTime * 1000 );
+        String sDateTime = simpleDateFormat.format(passedInDate);
+        return sDateTime;
+    }
+
+    /*********************************************************
+     * getHumanReadableTimeFromSecs()
+     *********************************************************/
+    public static String getHumanReadableTimeFromSecs(long aTotalSecs)
+    {
+        if (aTotalSecs == 0)
+        {
+            return "0 secs";
+        }
+
+        int elapsedYears   = (int) (aTotalSecs / 31536000);    // assume 365 days/year
+		int elapsedDays    = (int) (aTotalSecs / 86400);
+		int elapsedHours   = (int) (aTotalSecs / 3600);
+		int elapsedMinutes = (int) (aTotalSecs / 60);
+        int elapsedSeconds = (int) (aTotalSecs % 60);
+
+        StringBuilder sb = new StringBuilder();
+        if (elapsedYears > 1)
+        {
+            sb.append(elapsedYears + " years, ");
+        }
+
+        if (elapsedDays > 0)
+        {
+            sb.append(elapsedDays + " days, ");
+        }
+
+        if (elapsedHours > 0)
+        {
+            sb.append(elapsedHours + " hours, ");
+        }
+
+        if (elapsedMinutes > 0)
+        {
+            sb.append(elapsedMinutes + " min, ");
+        }
+
+        if (elapsedSeconds > 0)
+        {
+            sb.append(elapsedSeconds + " secs");
+        }
+
+        // Remove the last comma (if needed)
+        if (sb.charAt(sb.length() - 1) == ',')
+        {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+
+        return sb.toString();
+    }
+
 }

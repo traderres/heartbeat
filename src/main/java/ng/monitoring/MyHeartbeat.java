@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 
 public class MyHeartbeat
@@ -49,9 +47,13 @@ public class MyHeartbeat
                 logger.debug("Generating Stats");
 
                 // Generate stats from the stats file
-                String sStatsSummary = statusFileUtils.getSummary();
+                String sStatsSummary = statusFileUtils.getSummarySinceLastSunday() + "\n\n" +
+                                       statusFileUtils.getSummarySinceDay1();
 
                 // TODO: Email the stats out
+
+                // Stop here
+                System.exit(0);
             }
 
 
