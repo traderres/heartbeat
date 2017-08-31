@@ -2,13 +2,11 @@ package ng.monitoring;
 
 import org.simplejavamail.email.Email;
 import org.simplejavamail.mailer.Mailer;
-import org.simplejavamail.mailer.config.ProxyConfig;
 import org.simplejavamail.mailer.config.ServerConfig;
 import org.simplejavamail.mailer.config.TransportStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.Message;
 
 /**
  * Created by adam on 8/30/2017.
