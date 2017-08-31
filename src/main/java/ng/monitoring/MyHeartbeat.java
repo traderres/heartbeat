@@ -157,7 +157,7 @@ public class MyHeartbeat
 
         Status currentStatus = new Status();
         currentStatus.setSiteIsUp(false);
-        currentStatus.setEntryDate( DateUtils.getCurrentDateTimeAsEpoch() );
+        currentStatus.setEntryDateAsEpoch( DateUtils.getCurrentDateTimeAsEpochLong() );
 
         try(WebClient webClient = new WebClient(BrowserVersion.FIREFOX_45) )
         {

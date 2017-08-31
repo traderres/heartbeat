@@ -5,18 +5,48 @@ package ng.monitoring;
  */
 public class Status
 {
-    private boolean siteIsUp;
-    private String errorMessage;
-    private String errorStep;
-    private String entryDate;
+    private long    lDateAsEpoch;
+    private boolean bSiteIsUp;
+    private String  errorMessage;
+    private String  errorStep;
 
-    public String getEntryDate() {
-        return entryDate;
+    public Status()
+    {
+
     }
 
-    public void setEntryDate(String entryDate) {
-        this.entryDate = entryDate;
+    public Status(long alDateAsEpoch, boolean abSiteIsUp)
+    {
+        this.lDateAsEpoch = alDateAsEpoch;
+        this.bSiteIsUp = abSiteIsUp;
     }
+
+    public Status(long alDateAsEpoch, boolean abSiteIsUp, String aErrorMessage, String aErrorStep)
+    {
+        this.lDateAsEpoch = alDateAsEpoch;
+        this.bSiteIsUp = abSiteIsUp;
+        this.errorMessage = aErrorMessage;
+        this.errorStep = aErrorStep;
+    }
+
+
+    public long getEntryDateAsEpoch() {
+        return lDateAsEpoch;
+    }
+
+    public void setEntryDateAsEpoch(long alDateAsEpoch) {
+        this.lDateAsEpoch = alDateAsEpoch;
+    }
+
+
+    public boolean isSiteUp() {
+        return bSiteIsUp;
+    }
+
+    public void setSiteIsUp(boolean abSiteIsUp) {
+        this.bSiteIsUp = abSiteIsUp;
+    }
+
 
     public String getErrorMessage() {
         return errorMessage;
@@ -26,15 +56,6 @@ public class Status
         this.errorMessage = errorMessage;
     }
 
-    public boolean isSiteUp() {
-        return siteIsUp;
-    }
-
-    public void setSiteIsUp(boolean aSiteIsUp) {
-        siteIsUp = aSiteIsUp;
-    }
-
-
     public String getErrorStep() {
         return errorStep;
     }
@@ -42,4 +63,13 @@ public class Status
     public void setErrorStep(String errorStep) {
         this.errorStep = errorStep;
     }
+
+
+    public String toString()
+    {
+        String sStr = String.valueOf(lDateAsEpoch) + " " + String.valueOf(this.bSiteIsUp);
+        return sStr;
+    }
 }
+
+

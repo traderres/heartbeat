@@ -65,7 +65,7 @@ public class StatusFileUtils
         logger.debug("appendStatusToFile() started.");
 
         // Convert Status Object into a line of text (to append to the stats file)
-        String sSummary = getLineOfTextFromStatusObject(aStatus);
+        String sSummary = getLineOfTextFromStatus(aStatus);
 
         boolean bAppendMode = true;
 
@@ -115,7 +115,7 @@ public class StatusFileUtils
             // If the file is empty, then the last line might be null.  That's OK
 
             // Get the status object info from this line of text
-            lastStatus = getStatusObjectFromLineOfText(sLastLine);
+            lastStatus = getFullStatusFromStatsLine(sLastLine);
 
             // Get the status info from the line
             logger.debug("last line is this: {}", sLastLine);
@@ -170,49 +170,49 @@ public class StatusFileUtils
         {
             // Read one line from the file
             String sLine = br.readLine();
-            BriefStatus statsLine = getBriefStatusFromLine(sLine);
+            Status statsLine = getBriefStatusFromStatsLine(sLine);
 
             // The startDate is the epoch date pulled from the first line
-            lFirstEntryDateAsEpoch = statsLine.getlDateAsEpoch();
+            lFirstEntryDateAsEpoch = statsLine.getEntryDateAsEpoch();
 
 
             // Now, we have reached the desired range
-            BriefStatus lastStatsLine = statsLine;
+            Status lastStatsLine = statsLine;
 
-            if (lastStatsLine.isbSiteUp())
+            if (lastStatsLine.isSiteUp())
             {
-                 lDateStartingUpTime = lastStatsLine.getlDateAsEpoch();
+                 lDateStartingUpTime = lastStatsLine.getEntryDateAsEpoch();
             }
 
             // Keep reading until we reach EOF or the end of the range
             while ((sLine = br.readLine()) != null)
             {
-                statsLine = getBriefStatusFromLine(sLine);
+                statsLine = getBriefStatusFromStatsLine(sLine);
 
                 logger.debug("Processing statsLine={}   lastStatsLine={}", statsLine.toString(), lastStatsLine.toString());
 
-                if ((lastStatsLine.isbSiteUp()) && (! statsLine.isbSiteUp() ))
+                if ((lastStatsLine.isSiteUp()) && (! statsLine.isSiteUp() ))
                 {
                     // last stats was up and current stats is down
-                    lTotalUpTime = lTotalUpTime + lastStatsLine.getlDateAsEpoch() - lDateStartingUpTime + 1;
+                    lTotalUpTime = lTotalUpTime + lastStatsLine.getEntryDateAsEpoch() - lDateStartingUpTime + 1;
                 }
-                else if ((! lastStatsLine.isbSiteUp()) && (statsLine.isbSiteUp()))
+                else if ((! lastStatsLine.isSiteUp()) && (statsLine.isSiteUp()))
                 {
                     // last stats was down and current stats is up -- so reset the count
-                    lDateStartingUpTime = statsLine.getlDateAsEpoch();
+                    lDateStartingUpTime = statsLine.getEntryDateAsEpoch();
                 }
 
-                lLastEntryDateAsEpoch = statsLine.getlDateAsEpoch();
+                lLastEntryDateAsEpoch = statsLine.getEntryDateAsEpoch();
                 lastStatsLine = statsLine;
             }
 
 
             // We have reached the end of the range
             // -- Add up any numbers
-            if (lastStatsLine.isbSiteUp())    //  && (! statsLine.isbSiteUp() ))
+            if (lastStatsLine.isSiteUp())    //  && (! statsLine.isbSiteUp() ))
             {
                 // last stats was up and current stats is down
-                lTotalUpTime = lTotalUpTime + lastStatsLine.getlDateAsEpoch() - lDateStartingUpTime + 1;
+                lTotalUpTime = lTotalUpTime + lastStatsLine.getEntryDateAsEpoch() - lDateStartingUpTime + 1;
             }
 
 
@@ -220,17 +220,20 @@ public class StatusFileUtils
             lTotalDownTime = lTotalTime - lTotalUpTime;
             float percentUpTime =  ((float) lTotalUpTime / lTotalTime) * 100;
 
-            sSummary = String.format("Date Range:         %s - %s\n" +
-                                     "Total Down Time:    %s\n" +
-                                     "Total Up Time:      %s\n" +
-                                     "Total Time:         %s\n" +
-                                     "Percent Uptime:     %.2f%%\n",
-                                     DateUtils.getDateOfEpochTime(lFirstEntryDateAsEpoch),
-                                     DateUtils.getDateOfEpochTime(lLastEntryDateAsEpoch),
-                                     DateUtils.getHumanReadableTimeFromSecs(lTotalDownTime),
-                                     DateUtils.getHumanReadableTimeFromSecs(lTotalUpTime),
-                                     DateUtils.getHumanReadableTimeFromSecs(lTotalTime),
-                                     percentUpTime);
+            sSummary = String.format(
+                   "Statistics Since Day 1\n" +
+                   "----------------------\n" +
+                   "Date Range:         %s - %s\n" +
+                   "Total Down Time:    %s\n" +
+                   "Total Up Time:      %s\n" +
+                   "Total Time:         %s\n" +
+                   "Percent Uptime:     %.2f%%\n",
+                       DateUtils.getDateOfEpochTime(lFirstEntryDateAsEpoch),
+                       DateUtils.getDateOfEpochTime(lLastEntryDateAsEpoch),
+                       DateUtils.getHumanReadableTimeFromSecs(lTotalDownTime),
+                       DateUtils.getHumanReadableTimeFromSecs(lTotalUpTime),
+                       DateUtils.getHumanReadableTimeFromSecs(lTotalTime),
+                       percentUpTime);
         }
         catch (Exception e)
         {
@@ -284,68 +287,68 @@ public class StatusFileUtils
         {
             String sLine;
 
-            BriefStatus statsLine = null;
+            Status statsLine = null;
 
             // Keep reading until we reach the EOF or the desired time period
             while ((sLine = br.readLine()) != null)
             {
-                statsLine = getBriefStatusFromLine(sLine);
+                statsLine = getBriefStatusFromStatsLine(sLine);
 
-                if (statsLine.getlDateAsEpoch() > lDateRangeEndAsEpoch)
+                if (statsLine.getEntryDateAsEpoch() > lDateRangeEndAsEpoch)
                 {
                     // Break out of the while loop -- we are passed the date range
                     logger.warn("There are is nothing in the range");
                     return "No information is available";
                 }
-                else if (statsLine.getlDateAsEpoch() >= lDateRangeStartAsEpoch)
+                else if (statsLine.getEntryDateAsEpoch() >= lDateRangeStartAsEpoch)
                 {
                     // We reached the starting point -- break out of this while loop
                     logger.debug("Reached the starting point.");
-                    lFirstEntryDateAsEpoch = statsLine.getlDateAsEpoch();
+                    lFirstEntryDateAsEpoch = statsLine.getEntryDateAsEpoch();
                     break;
                 }
             }
 
             // Now, we have reached the desired range
-            BriefStatus lastStatsLine = statsLine;
+            Status lastStatsLine = statsLine;
 
-            if (lastStatsLine.isbSiteUp())
+            if (lastStatsLine.isSiteUp())
             {
-                 lDateStartingUpTime = lastStatsLine.getlDateAsEpoch();
+                 lDateStartingUpTime = lastStatsLine.getEntryDateAsEpoch();
             }
 
             // Keep reading until we reach EOF or the end of the range
             while ((sLine = br.readLine()) != null)
             {
-                statsLine = getBriefStatusFromLine(sLine);
+                statsLine = getBriefStatusFromStatsLine(sLine);
 
                 logger.debug("Processing statsLine={}   lastStatsLine={}", statsLine.toString(), lastStatsLine.toString());
-                if (statsLine.getlDateAsEpoch() > lDateRangeEndAsEpoch)
+                if (statsLine.getEntryDateAsEpoch() > lDateRangeEndAsEpoch)
                 {
                     // We have reached the end of the range
                     // -- Add up any numbers
 
-                   if (lastStatsLine.isbSiteUp())    //  && (! statsLine.isbSiteUp() ))
+                   if (lastStatsLine.isSiteUp())    //  && (! statsLine.isbSiteUp() ))
                    {
                         // last stats was up and current stats is down
-                        lTotalUpTime = lTotalUpTime + lastStatsLine.getlDateAsEpoch() - lDateStartingUpTime + 1;
+                        lTotalUpTime = lTotalUpTime + lastStatsLine.getEntryDateAsEpoch() - lDateStartingUpTime + 1;
                    }
 
                    // Break out of the while loop
                    break;
                 }
-                else if ((lastStatsLine.isbSiteUp()) && (! statsLine.isbSiteUp() ))
+                else if ((lastStatsLine.isSiteUp()) && (! statsLine.isSiteUp() ))
                 {
                     // last stats was up and current stats is down
-                    lTotalUpTime = lTotalUpTime + lastStatsLine.getlDateAsEpoch() - lDateStartingUpTime + 1;
+                    lTotalUpTime = lTotalUpTime + lastStatsLine.getEntryDateAsEpoch() - lDateStartingUpTime + 1;
                 }
-                else if ((! lastStatsLine.isbSiteUp()) && (statsLine.isbSiteUp()))
+                else if ((! lastStatsLine.isSiteUp()) && (statsLine.isSiteUp()))
                 {
                     // last stats was down and current stats is up -- so reset the count
-                    lDateStartingUpTime = statsLine.getlDateAsEpoch();
+                    lDateStartingUpTime = statsLine.getEntryDateAsEpoch();
                 }
 
-                lLastEntryDateAsEpoch = statsLine.getlDateAsEpoch();
+                lLastEntryDateAsEpoch = statsLine.getEntryDateAsEpoch();
                 lastStatsLine = statsLine;
             }
 
@@ -355,17 +358,20 @@ public class StatusFileUtils
             lTotalDownTime = lTotalTime - lTotalUpTime;
             float percentUpTime =  ((float) lTotalUpTime / lTotalTime) * 100;
 
-            sSummary = String.format("Date Range:         %s - %s\n" +
-                                     "Total Down Time:    %s\n" +
-                                     "Total Up Time:      %s\n" +
-                                     "Total Time:         %s\n" +
-                                     "Percent Uptime:     %.2f%%\n",
-                                     DateUtils.getDateOfEpochTime(lDateRangeStartAsEpoch),
-                                     DateUtils.getDateOfEpochTime(lDateRangeEndAsEpoch),
-                                     DateUtils.getHumanReadableTimeFromSecs(lTotalDownTime),
-                                     DateUtils.getHumanReadableTimeFromSecs(lTotalUpTime),
-                                     DateUtils.getHumanReadableTimeFromSecs(lTotalTime),
-                                     percentUpTime);
+            sSummary = String.format(
+                   "Statistics for the Previous Week\n" +
+                   "--------------------------------\n" +
+                   "Date Range:         %s - %s\n" +
+                   "Total Down Time:    %s\n" +
+                   "Total Up Time:      %s\n" +
+                   "Total Time:         %s\n" +
+                   "Percent Uptime:     %.2f%%\n",
+                         DateUtils.getDateOfEpochTime(lDateRangeStartAsEpoch),
+                         DateUtils.getDateOfEpochTime(lDateRangeEndAsEpoch),
+                         DateUtils.getHumanReadableTimeFromSecs(lTotalDownTime),
+                         DateUtils.getHumanReadableTimeFromSecs(lTotalUpTime),
+                         DateUtils.getHumanReadableTimeFromSecs(lTotalTime),
+                         percentUpTime);
         }
         catch (Exception e)
         {
@@ -383,7 +389,7 @@ public class StatusFileUtils
     /********************************************************************
      * getBriefStatusFromLine()
      ********************************************************************/
-    private BriefStatus getBriefStatusFromLine(String aLine)
+    private Status getBriefStatusFromStatsLine(String aLine)
     {
         Matcher m = patExtractTimeAndSiteIsUp.matcher(aLine);
 
@@ -395,7 +401,7 @@ public class StatusFileUtils
         long lDateFromLine = Long.parseLong(m.group(1));
         boolean bSiteIsUpFromLine = Boolean.parseBoolean(m.group(2));
 
-        BriefStatus briefStatus = new BriefStatus(lDateFromLine, bSiteIsUpFromLine);
+        Status briefStatus = new Status(lDateFromLine, bSiteIsUpFromLine);
         return briefStatus;
     }
 
@@ -403,11 +409,11 @@ public class StatusFileUtils
 
 
     /********************************************************************
-     * getStatusObjectFromLineOfText()
+     * getFullStatusFromStatsLine()
      *
      * Returns a Null object if no status info was found in the file (the file was empty)
      ********************************************************************/
-    private Status getStatusObjectFromLineOfText(String aLine)
+    private Status getFullStatusFromStatsLine(String aLine)
     {
 
         if ((aLine == null) || (aLine.length() == 0))
@@ -416,22 +422,23 @@ public class StatusFileUtils
             return null;
         }
 
-         Status oStatus = new Status();
 
         // Split-up the line into its elements
         String[] statsArray = aLine.split(",");
 
-        String  sEntryDate = statsArray[0];
+        if (statsArray.length < 4)
+        {
+            throw new RuntimeException("Critical Error in getFullStatusFromStatsLine:  This stats line is invalid:  " + aLine);
+        }
+
+        long    lEntryDate = Long.parseLong(statsArray[0]);
         Boolean bSiteIsUp = new Boolean(statsArray[1]);
         String  sErrorMessage = statsArray[2];
         String  sErrorStep = statsArray[3];
 
-        oStatus.setEntryDate(sEntryDate);
-        oStatus.setSiteIsUp(bSiteIsUp);
-        oStatus.setErrorMessage(sErrorMessage);
-        oStatus.setErrorStep(sErrorStep);
+        Status fullStatus = new Status(lEntryDate, bSiteIsUp, sErrorMessage, sErrorStep);
 
-        return oStatus;
+        return fullStatus;
     }
 
 
@@ -439,14 +446,14 @@ public class StatusFileUtils
     /********************************************************************
      * getLineOfTextFromStatusObject()
      ********************************************************************/
-    private String getLineOfTextFromStatusObject(Status aStatus)
+    private String getLineOfTextFromStatus(Status aStatus)
     {
         if (aStatus == null)
         {
             throw new RuntimeException("Critical Error in getLineOfTextFromStatusObject():  The passed-in aStatus object is null.");
         }
 
-        String sStatsLine = aStatus.getEntryDate() + "," +
+        String sStatsLine = String.valueOf(aStatus.getEntryDateAsEpoch()) +
                             aStatus.isSiteUp() + "," +
                             aStatus.getErrorMessage() + "," +
                             aStatus.getErrorStep();

@@ -23,17 +23,37 @@ public class DateUtils
         return sDateTime;
     }
 
+    /*********************************************************
+     * getCurrentDate()
+     *********************************************************/
+    public static String getCurrentDate()
+     {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy");
+        Date now = new Date();
+        String sDate = simpleDateFormat.format(now);
+        return sDate;
+    }
 
     /*********************************************************
-     * getCurrentDateTimeAsEpoch()
+     * getCurrentDateTimeAsEpochString()
      *********************************************************/
-    public static String getCurrentDateTimeAsEpoch()
+    public static String getCurrentDateTimeAsEpochString()
     {
         long lDateTimeAsSecondsSince1970 = Instant.now().getEpochSecond();
 
         String sDateTimeAsSecondsSince1970 = java.lang.String.valueOf(lDateTimeAsSecondsSince1970);
 
         return sDateTimeAsSecondsSince1970;
+    }
+
+
+    /*********************************************************
+     * getCurrentDateTimeAsEpochLong()
+     *********************************************************/
+    public static long getCurrentDateTimeAsEpochLong()
+    {
+        long lDateTimeAsSecondsSince1970 = Instant.now().getEpochSecond();
+        return lDateTimeAsSecondsSince1970;
     }
 
 
