@@ -50,7 +50,8 @@ public class MyHeartbeat
                 String sStatsSummary = statusFileUtils.getSummarySinceLastSunday() + "\n\n" +
                                        statusFileUtils.getSummarySinceDay1();
 
-                // TODO: Email the stats out
+                // Email the stats out
+                EmailUtils.sendStatsEmail(sStatsSummary);
 
                 // Stop here
                 System.exit(0);
