@@ -41,17 +41,22 @@ public class MyHeartbeat
             // Instantiate the StatusFileUtils class (needs the file path)
             StatusFileUtils statusFileUtils = new StatusFileUtils(sStatsFilePath);
 
+            // Instantiate the EmailUtils class (need the SMTP Serve rinformation)
+            // NOTE:  To use smtp.gmail.com, we must configure the myname@gmail.com account to allow less secure apps
+            //        See https://myaccount.google.com/lesssecureapps
+            EmailUtils emailUtils = new EmailUtils("smtp.gmail.com", 465, "username@g2-inc.com", "password");
+
             if (cmd.hasOption("generatestats"))
             {
                 // Generate Stats
                 logger.debug("Generating Stats");
 
                 // Generate stats from the stats file
-                String sStatsSummary = statusFileUtils.getSummarySinceLastSunday() + "\n\n" +
+                String sStatsSummary = statusFileUtils.getSummarySinceLastSunday() + "\n\n\n" +
                                        statusFileUtils.getSummarySinceDay1();
 
                 // Email the stats out
-                EmailUtils.sendStatsEmail(sStatsSummary);
+                emailUtils.sendEmailWithStats(sStatsSummary);
 
                 // Stop here
                 System.exit(0);
@@ -78,17 +83,13 @@ public class MyHeartbeat
             {
                 // The website was last reported up and is now Down
                 // -- Send the website-is-down notification
-                logger.debug("Website is now down.");
-
-                // TODO: Email a message saying the website is now down
+                emailUtils.sendEmailSiteIsDown();
             }
             else if ((! lastStatusFromFile.isSiteUp() ) && (currentSiteStatus.isSiteUp()  ))
             {
                 // The website was last reported down and is now Up
                 // -- Send the website-is-up notification
-                logger.debug("Website is now up.");
-
-                // TODO: Email a message saying the website is now up
+                emailUtils.sendEmailSiteIsUp();
             }
             else
             {

@@ -168,9 +168,16 @@ public class StatusFileUtils
         // NOTE:  When the JVM gets out of this try block, the OutputStreamWriter object will be closed
         try ( BufferedReader br = new BufferedReader(new FileReader(this.statsFilePath)) )
         {
-            // Read one line from the file
-            String sLine = br.readLine();
-            Status statsLine = getBriefStatusFromStatsLine(sLine);
+            // Get the stats of the first valid line from the file
+            String sLine;
+            Status statsLine = null;
+
+            while (statsLine == null)
+            {
+                // The last line could not be parsed -- so skip it
+                sLine = br.readLine();
+                statsLine = getBriefStatusFromStatsLine(sLine);
+            }
 
             // The startDate is the epoch date pulled from the first line
             lFirstEntryDateAsEpoch = statsLine.getEntryDateAsEpoch();
@@ -188,6 +195,12 @@ public class StatusFileUtils
             while ((sLine = br.readLine()) != null)
             {
                 statsLine = getBriefStatusFromStatsLine(sLine);
+
+                if (statsLine == null)
+                {
+                    // The last line could not be parsed -- so skip it
+                    continue;
+                }
 
                 logger.debug("Processing statsLine={}   lastStatsLine={}", statsLine.toString(), lastStatsLine.toString());
 
@@ -294,11 +307,22 @@ public class StatusFileUtils
             {
                 statsLine = getBriefStatusFromStatsLine(sLine);
 
+                if (statsLine == null)
+                {
+                    // The last line could not be parsed -- so skip it
+                    continue;
+                }
+
                 if (statsLine.getEntryDateAsEpoch() > lDateRangeEndAsEpoch)
                 {
                     // Break out of the while loop -- we are passed the date range
                     logger.warn("There are is nothing in the range");
-                    return "No information is available";
+
+                    sSummary = String.format(
+                            "Statistics for the Previous Week\n" +
+                            "--------------------------------\n" +
+                            "No information is available");
+                    return sSummary;
                 }
                 else if (statsLine.getEntryDateAsEpoch() >= lDateRangeStartAsEpoch)
                 {
@@ -321,6 +345,12 @@ public class StatusFileUtils
             while ((sLine = br.readLine()) != null)
             {
                 statsLine = getBriefStatusFromStatsLine(sLine);
+
+                if (statsLine == null)
+                {
+                    // The last line could not be parsed -- so skip it
+                    continue;
+                }
 
                 logger.debug("Processing statsLine={}   lastStatsLine={}", statsLine.toString(), lastStatsLine.toString());
                 if (statsLine.getEntryDateAsEpoch() > lDateRangeEndAsEpoch)
@@ -391,11 +421,19 @@ public class StatusFileUtils
      ********************************************************************/
     private Status getBriefStatusFromStatsLine(String aLine)
     {
+        if ((aLine == null) || (aLine.length() == 0))
+        {
+            // The line was empty so return an *empty* status object
+            logger.warn("Could not parse this line as it was empty");
+            return null;
+        }
+
         Matcher m = patExtractTimeAndSiteIsUp.matcher(aLine);
 
         if (! m.find() )
         {
-            throw new RuntimeException("Critical Error in getDateFromLine()  I could not parse the date from this line:  aLine=" + aLine);
+            logger.warn("Could not parse this line:  aLine==>{}<==", aLine);
+            return null;
         }
 
         long lDateFromLine = Long.parseLong(m.group(1));
@@ -415,26 +453,27 @@ public class StatusFileUtils
      ********************************************************************/
     private Status getFullStatusFromStatsLine(String aLine)
     {
-
-        if ((aLine == null) || (aLine.length() == 0))
-        {
-            // The line was empty so return an *empty* status object
-            return null;
-        }
-
-
         // Split-up the line into its elements
         String[] statsArray = aLine.split(",");
 
-        if (statsArray.length < 4)
+        if (statsArray.length < 2)
         {
-            throw new RuntimeException("Critical Error in getFullStatusFromStatsLine:  This stats line is invalid:  " + aLine);
+            logger.warn("Could not parse this line:  aLine==>{}<==", aLine);
+            return null;
         }
 
         long    lEntryDate = Long.parseLong(statsArray[0]);
         Boolean bSiteIsUp = new Boolean(statsArray[1]);
-        String  sErrorMessage = statsArray[2];
-        String  sErrorStep = statsArray[3];
+        String  sErrorMessage = null;
+        String  sErrorStep= null;
+        if (statsArray.length >= 3)
+        {
+            sErrorMessage = statsArray[2];
+        }
+
+        if (statsArray.length >= 4) {
+            sErrorStep = statsArray[3];
+        }
 
         Status fullStatus = new Status(lEntryDate, bSiteIsUp, sErrorMessage, sErrorStep);
 
@@ -453,7 +492,7 @@ public class StatusFileUtils
             throw new RuntimeException("Critical Error in getLineOfTextFromStatusObject():  The passed-in aStatus object is null.");
         }
 
-        String sStatsLine = String.valueOf(aStatus.getEntryDateAsEpoch()) +
+        String sStatsLine = String.valueOf(aStatus.getEntryDateAsEpoch()) + "," +
                             aStatus.isSiteUp() + "," +
                             aStatus.getErrorMessage() + "," +
                             aStatus.getErrorStep();
