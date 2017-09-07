@@ -282,6 +282,8 @@ public class StatusFileUtils
         // Get the epoch values for last Sunday and last Saturday
         long lDateRangeStartAsEpoch = DateUtils.getSundayMidnightBeforeLastSaturdayAsEpoch();
         long lDateRangeEndAsEpoch = DateUtils.getLastSaturdayMignightAsEpoch();
+        logger.debug("rangeStartDate={}   rangeEndDate={}", DateUtils.getDateOfEpochTime(lDateRangeStartAsEpoch),
+                                                            DateUtils.getDateOfEpochTime(lDateRangeEndAsEpoch));
 
         String sSummary;
 

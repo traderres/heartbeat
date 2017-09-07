@@ -67,7 +67,7 @@ public class Status
 
     public String toString()
     {
-        String sStr = String.valueOf(lDateAsEpoch) + " " + String.valueOf(this.bSiteIsUp);
+        String sStr = String.valueOf(lDateAsEpoch) + " " + String.valueOf(this.bSiteIsUp) + " " + this.errorMessage;
         return sStr;
     }
 }

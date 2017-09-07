@@ -1,21 +1,15 @@
 1503348669,true,
-1503348670,false,
-1503348972,true,
+1503348670,false,08/21/2017 8:51:10
+1503348972,true,08/21/2017 8:56:12
 
-1503867069,true,
-1503867070,true,
-
-
-
-1504297884,false,something bad happened.,null
-1504298051,false,something bad happened.,null
+1503867069,true,08/27/2017 20:51:09
+1503867070,true,08/27/2017 20:51:10
 
 
 
+1504297884,false,09/01/2017 20:31:24 something bad happened.,null
+1504298051,false,09/01/2017 20:34:11 something bad happened.,null
+1504298072,true,09/01/2017 20:34:32 site is up,null
 
-
-
-1504298072,true,something bad happened.,null
-
-1504298089,true,something bad happened.,null
-1504298944,false,something bad happened.,null
+1504298089,true,09/01/2017 20:34:39 site is up,null
+1504298944,false,09/01/2017 20:49:39 something bad happened.,null
